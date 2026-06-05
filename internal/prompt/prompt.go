@@ -21,10 +21,20 @@ func Assemble(question string, chunks []retriever.Chunk) (string, string) {
 	return AssembleFor(Customer, question, chunks)
 }
 
-// AssembleFor builds (systemPrompt, userPrompt) using the given mode's persona,
-// from the question and retrieved chunks. The grounding instruction is identical
-// across modes; only the system persona differs.
+// AssembleFor builds (systemPrompt, userPrompt) using the given mode's full persona.
 func AssembleFor(m Mode, question string, chunks []retriever.Chunk) (string, string) {
+	return m.System, buildUserPrompt(question, chunks)
+}
+
+// AssembleForShort is AssembleFor with the mode's distilled short persona — used
+// when serving the tuned (prompt-distilled) model. The user prompt is identical.
+func AssembleForShort(m Mode, question string, chunks []retriever.Chunk) (string, string) {
+	return m.Short, buildUserPrompt(question, chunks)
+}
+
+// buildUserPrompt renders the SOURCES + QUESTION + grounding instruction block.
+// The grounding instruction is identical across modes; only the system persona differs.
+func buildUserPrompt(question string, chunks []retriever.Chunk) string {
 	var b strings.Builder
 	if len(chunks) == 0 {
 		b.WriteString("SOURCES: (walang nahanap na source / no sources found)\n\n")
@@ -37,5 +47,5 @@ func AssembleFor(m Mode, question string, chunks []retriever.Chunk) (string, str
 	}
 	fmt.Fprintf(&b, "QUESTION: %s\n", question)
 	b.WriteString("\nSagutin gamit lang ang SOURCES sa itaas. Kung kulang, mag-escalate.")
-	return m.System, b.String()
+	return b.String()
 }

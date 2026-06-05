@@ -6,6 +6,7 @@ type Mode struct {
 	Name     string // conversation mode label
 	Audience string // knowledge_documents.audience to retrieve from
 	System   string // persona system prompt
+	Short    string // distilled short persona (for the tuned model)
 }
 
 // buyerSystem targets homeowners actively comparing/buying — product fit,
@@ -25,11 +26,25 @@ const installerSystem = `You are Apolaki Assistant supporting a solar installer/
 	`facts found in the provided sources; if missing, say so — never guess. Always uphold ` +
 	`electrical and installation safety standards and local code. Cite the source titles you used.`
 
+// Short personas (distilled): condensed equivalents of the full personas, used
+// when serving the prompt-distilled tuned model so the 16K context is freed up.
+const customerShort = `Apolaki solar assistant para sa Pinoy homeowners. Sagot sa Taglish, ` +
+	`focus sa ₱ savings/ROI. Gamitin lang ang SOURCES; kung kulang, mag-escalate sa specialist — ` +
+	`huwag mag-guess. I-cite ang source titles. Safety/wiring → licensed installer.`
+
+const buyerShort = `Apolaki buyer assistant. Taglish; tulungan piliin/bilhin ang tamang solar ` +
+	`(specs, sizing, financing, ₱ ROI). Gamitin lang ang SOURCES; kung kulang, sales specialist. ` +
+	`I-cite ang source titles.`
+
+const installerShort = `Apolaki installer assistant. Technical Taglish, datasheet specs. ` +
+	`Gamitin lang ang SOURCES; kung kulang, sabihin — huwag mag-guess. I-cite ang source titles. ` +
+	`Laging sundin ang electrical/installation safety at local code.`
+
 // The three Phase 1/2 modes.
 var (
-	Customer  = Mode{Name: "customer", Audience: "customer", System: System}
-	Buyer     = Mode{Name: "buyer", Audience: "buyer", System: buyerSystem}
-	Installer = Mode{Name: "installer", Audience: "installer", System: installerSystem}
+	Customer  = Mode{Name: "customer", Audience: "customer", System: System, Short: customerShort}
+	Buyer     = Mode{Name: "buyer", Audience: "buyer", System: buyerSystem, Short: buyerShort}
+	Installer = Mode{Name: "installer", Audience: "installer", System: installerSystem, Short: installerShort}
 )
 
 // ModeByName resolves a mode label, defaulting to Customer for empty/unknown.

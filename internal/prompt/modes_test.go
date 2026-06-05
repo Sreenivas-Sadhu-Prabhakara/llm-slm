@@ -42,6 +42,36 @@ func TestAssembleForUsesModePersona(t *testing.T) {
 	}
 }
 
+func TestShortPersonasNonEmptyAndKeepGuardrails(t *testing.T) {
+	for _, m := range []Mode{Customer, Buyer, Installer} {
+		if m.Short == "" {
+			t.Fatalf("%s mode missing Short persona", m.Name)
+		}
+		low := strings.ToLower(m.Short)
+		if !strings.Contains(low, "source") {
+			t.Errorf("%s short persona should keep grounded/source guardrail: %q", m.Name, m.Short)
+		}
+		if len(m.Short) >= len(m.System) {
+			t.Errorf("%s short persona should be shorter than full System", m.Name)
+		}
+	}
+}
+
+func TestAssembleForShortUsesShortPersona(t *testing.T) {
+	chunks := []retriever.Chunk{{Title: "Spec", Content: "450W mono"}}
+	sys, user := AssembleForShort(Installer, "anong torque?", chunks)
+	if sys != Installer.Short {
+		t.Fatalf("AssembleForShort should return the short persona, got %q", sys)
+	}
+	if !strings.Contains(user, "450W mono") {
+		t.Fatal("source content missing from user prompt")
+	}
+	_, userFull := AssembleFor(Installer, "anong torque?", chunks)
+	if user != userFull {
+		t.Fatal("short and full assemblers must build identical user prompts")
+	}
+}
+
 func TestAssembleStillCustomer(t *testing.T) {
 	sys, _ := Assemble("magkano?", nil)
 	if sys != Customer.System {
