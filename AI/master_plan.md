@@ -7,7 +7,7 @@ Custom, **solar-only** support assistant (the "solar brain") for the **Apolaki**
 **North star:** advocacy for **domestic solar adoption** — ROI / energy independence in **PHP**, spoken in **Taglish**.
 Self-hosted on the **Mac Studio** behind **LiteLLM**, **RAG** over Apolaki docs. **≈ ₱0 per query.**
 
-## Status — 2026-06-05 (P0.10)
+## Status — 2026-06-05 (Phase 0 COMPLETE)
 - ✅ Design / PRD complete and **approved** → `AI/docs/PRDs/2026-06-05-apolaki-solar-assistant-design.md`
 - ✅ **Local serving stack hardened** (fixed timeouts/peer-resets): LiteLLM `:4000` live with retries + MLX→Ollama fallback; MLX real streaming. See memory `local-serving-stack`.
 - ✅ **Phase 0 implementation plan written** → `AI/docs/tasks/2026-06-05-phase-0-foundation.md` (13 bite-sized TDD tasks P0.0–P0.12). Phases 1–3 kept as roadmap (detail gated on P0 outcomes + real data).
@@ -22,9 +22,10 @@ Self-hosted on the **Mac Studio** behind **LiteLLM**, **RAG** over Apolaki docs.
 - ✅ **P0.8 done** — `internal/retriever` (`New`/`Search`): embeds the question via BGE-M3, runs tenant-scoped top-k cosine (`<=>`) over `knowledge_chunks` joined to `knowledge_documents`, returns `Chunk{ChunkID,DocID,Title,SourceURI,Content,Score}`. Input guards + parameterized SQL; `tenant_id` NULL = shared. TDD green, review addressed (input guards, cast comment, stronger test). Commits `399cdb8`, `1abb250`.
 - ✅ **P0.9 done** — `internal/prompt` (`Assemble(question, chunks) -> (system, user)`): `System` const holds the condensed Taglish advocate persona (grounded-only, solar-only, cite sources, escalate on safety/wiring); user prompt lists numbered `SOURCES` + `QUESTION` with an explicit no-sources signal (`walang nahanap`) for grounding. TDD: tests green, `go vet` clean. Commit `d00c4fc`.
 - ✅ **P0.10 done** — `internal/generator` (`New(baseURL,key,model)` + `Stream(ctx, system, user, onToken)`): streaming POST to OpenAI-compatible `/chat/completions`, invokes `onToken` per content delta until `[DONE]`; 1MB scanner buffer for large SSE frames, skips keep-alive/non-JSON frames, 10-min timeout for slow local GGUF behind MLX→Ollama fallback. Mirrors `internal/embed`. TDD: httptest fake SSE green, `go vet`/build clean. Commit `f78780c`.
-- ⏳ **Next:** execute **P0.11** `cmd/ask` (the Phase 0 deliverable: retrieve→assemble→stream→print sources). **Needs infra up + seed ingested** (Postgres `:5433`, LiteLLM `:4000`, embeddings `:8100`, SEA-LION via Ollama `:11434`). Then P0.12 health server skeleton (`cmd/server`, `/assistant/health` + `-migrate` flag).
-- ⬜ Phase 0 — Foundation (Go service + RAG + synthetic data + CLI test harness)
-- ⬜ Phase 1 — Customer self-service MVP (Vue widget, guardrails, logging + feedback)
+- ✅ **P0.11 done** — `cmd/ask` (the Phase 0 deliverable): wires `config.Load → db.Connect → retriever.Search` (top-4, customer audience, shared tenant) `→ prompt.Assemble → generator.Stream` (token-by-token to stdout) `→` print cited source titles. **Verified end-to-end vs live infra + 7 seed docs:** "magkano matitipid… kada buwan?" → grounded Taglish answer citing the ROI doc (~₱4,000/mo on a 5 kW system); "sino panalo sa NBA finals?" → declines + redirects (solar-only guardrail holds). Commit `273c789`.
+- ✅ **P0.12 done** — `cmd/server`: connects pool, runs idempotent migrations on boot, serves `GET /assistant/health` (`pool.Ping` → `{"status":"ok"}` | 503 `db_unreachable`) on `:8090`; `-migrate` flag applies migrations and exits (deploy/CI). Verified live: health `{"status":"ok"}`; `-migrate` → "migrations applied", exit 0. Commit `19ef1c5`.
+- ✅ **Phase 0 — Foundation COMPLETE** (P0.0–P0.12): Go service + pgvector/HNSW RAG + BGE-M3 embeddings + SEA-LION generation via LiteLLM + synthetic Taglish seed + `ask` CLI test harness + health server. Full suite green, `go vet` clean. **First end-to-end grounded Taglish answer with citations + working solar-only guardrail.**
+- ⏳ Phase 1 — Customer self-service MVP (Vue widget, guardrails, logging + feedback) — **next; needs a Phase 1 plan written before coding**
 - ⬜ Phase 2 — Light Taglish LoRA fine-tune + buyer/installer modes
 - ⬜ Phase 3 — Advocacy features + scale (cloud GPU once past ~1,000 users)
 
@@ -36,8 +37,7 @@ Self-hosted on the **Mac Studio** behind **LiteLLM**, **RAG** over Apolaki docs.
 - **Guardrails:** 3-layer solar-only (topic gate → grounded-only → safety/escalate).
 
 ## Next Session
-- Execute **P0.11** `cmd/ask` (the Phase 0 deliverable: retrieve→assemble→stream→print sources) from `AI/docs/tasks/2026-06-05-phase-0-foundation.md` (Task 11), one task per session per the ai-wf loop. **Needs infra up + seed ingested** — this is the first end-to-end RAG run, so bring up all services first (see below) and verify a grounded Taglish answer + an off-topic decline.
-- Then P0.12 health server skeleton (`cmd/server`, `/assistant/health` + `-migrate`).
+- **Phase 0 is complete** — the whole P0.0–P0.12 backlog is done and verified end-to-end. The next backlog item is **Phase 1 (Customer self-service MVP)**, which per the ai-wf loop should start with a **brainstorm + Phase 1 implementation plan** (`AI/docs/tasks/…-phase-1-*.md`) before any code — Phase 1 detail was deliberately gated on Phase 0 outcomes + real data. Likely scope: Vue chat widget, HTTP `/assistant/ask` endpoint (wrap the `ask` path behind the server), 3-layer guardrails hardening, conversation/message logging + thumbs feedback.
 - Re-ingest if DB was reset: `set -a; source .env; set +a; python3 data/generate_seed.py && go run ./cmd/ingest` (insert-only — truncate `knowledge_chunks`/`knowledge_documents` first to avoid duplicates).
 - Confirm infra up first: `colima start && docker-compose up -d` (Postgres), `curl :4000/health/liveliness`, `:8000/health`, `:11434/api/tags`, and the **embeddings server** `:8100/health` (start: `cd embeddings-server && nohup .venv/bin/python -m uvicorn server:app --host 127.0.0.1 --port 8100 > /tmp/bge.log 2>&1 &`). None auto-start after reboot.
 - Run Go tests that touch the DB with env loaded: `set -a; source .env; set +a; go test ./...`.
@@ -60,4 +60,6 @@ Self-hosted on the **Mac Studio** behind **LiteLLM**, **RAG** over Apolaki docs.
 | 2026-06-05 | P0.8 — Retriever (HNSW vector search, tenant-scoped) | ✅ Done |
 | 2026-06-05 | P0.9 — Taglish persona prompt assembler | ✅ Done |
 | 2026-06-05 | P0.10 — Streaming generator client (LiteLLM SSE) | ✅ Done |
-| — | P0.11 — `ask` CLI (Phase 0 deliverable) | ⏳ Next |
+| 2026-06-05 | P0.11 — `ask` CLI (Phase 0 deliverable) | ✅ Done |
+| 2026-06-05 | P0.12 — HTTP health skeleton + `-migrate` flag | ✅ Done |
+| 2026-06-05 | **Phase 0 — Foundation** | ✅ **COMPLETE** |
