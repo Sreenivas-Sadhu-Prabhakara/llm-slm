@@ -17,7 +17,8 @@ Self-hosted on the **Mac Studio** behind **LiteLLM**, **RAG** over Apolaki docs.
 - ✅ **P0.3 done** — `embeddings-server/` (FastAPI, OpenAI-compatible `/v1/embeddings`, BGE-M3 1024-dim dense) on `:8100`; registered `bge-m3` in LiteLLM (`:4000`), restarted, verified `dim: 1024` end-to-end. Commit `4a3e3ec`. **Notes:** model cached at `~/.cache/huggingface/hub/models--BAAI--bge-m3` (~4.3GB, downloaded once); venv had no console scripts so start via `.venv/bin/python -m uvicorn server:app --host 127.0.0.1 --port 8100`; `litellm_config.yaml` (in `agent_skills/`, unversioned) gained a `bge-m3` route block.
 - ✅ **P0.4 done** — `internal/embed` Go client (`New`/`Embed`) hits OpenAI-compatible `/embeddings`; TDD via httptest fake, returns 1024-dim `[]float64`. `go vet` clean; full suite (config/db/embed) green. Commit `97d7fbd`.
 - ✅ **P0.5 done** — registered `sea-lion-9b` generation route in LiteLLM (`:4000`): `ollama_chat/hf.co/aisingapore/Gemma-SEA-LION-v3-9B-IT-GGUF:Q4_K_M` (5.8GB GGUF, pulled into Ollama), 600s timeout, fallback `sea-lion-9b → qwen-ollama`. Restarted LiteLLM, smoke-test green (Taglish `SEA_LION_OK`, `model: sea-lion-9b`). **Infra-only** (no service-repo code); `litellm_config.yaml` in `agent_skills/` (unversioned). Memory `local-serving-stack` updated.
-- ⏳ **Next:** execute **P0.6** (synthetic seed-data generator — Python pipeline producing datasheets + FAQ + tickets → JSONL).
+- ✅ **P0.6 done** — `data/generate_seed.py` (stdlib-only, deterministic) + `data/requirements.txt`; writes `data/seed/corpus.jsonl` (7 Taglish docs: 4 FAQ + 2 datasheet + 1 ticket), each defaulting `audience=customer`/`brand=Apolaki`/`language=taglish`/`product` + sha256 `content_hash`. Verified 7 valid JSON lines + identical output on re-run; `data/seed/` added to `.gitignore` (raw output unversioned). Commit `48e3542`.
+- ⏳ **Next:** execute **P0.7** (ingestion pipeline — `internal/ingest` chunk→embed→upsert + `cmd/ingest`, reads `data/seed/corpus.jsonl` into pgvector). Needs infra up: Postgres (`colima start && docker-compose up -d`), LiteLLM `:4000`, embeddings server `:8100`.
 - ⬜ Phase 0 — Foundation (Go service + RAG + synthetic data + CLI test harness)
 - ⬜ Phase 1 — Customer self-service MVP (Vue widget, guardrails, logging + feedback)
 - ⬜ Phase 2 — Light Taglish LoRA fine-tune + buyer/installer modes
@@ -31,7 +32,7 @@ Self-hosted on the **Mac Studio** behind **LiteLLM**, **RAG** over Apolaki docs.
 - **Guardrails:** 3-layer solar-only (topic gate → grounded-only → safety/escalate).
 
 ## Next Session
-- Execute **P0.6** (synthetic seed-data generator, Python — `data/generate_seed.py` producing datasheets + FAQ + tickets → JSONL in `data/seed/`) from `AI/docs/tasks/2026-06-05-phase-0-foundation.md`, one task per session per the ai-wf loop.
+- Execute **P0.7** (ingestion pipeline — `internal/ingest` chunk→embed→upsert + `cmd/ingest`; reads `data/seed/corpus.jsonl` → pgvector) from `AI/docs/tasks/2026-06-05-phase-0-foundation.md` (Task 7), one task per session per the ai-wf loop. Regenerate seed first if missing: `python3 data/generate_seed.py`.
 - Confirm infra up first: `colima start && docker-compose up -d` (Postgres), `curl :4000/health/liveliness`, `:8000/health`, `:11434/api/tags`, and the **embeddings server** `:8100/health` (start: `cd embeddings-server && nohup .venv/bin/python -m uvicorn server:app --host 127.0.0.1 --port 8100 > /tmp/bge.log 2>&1 &`). None auto-start after reboot.
 - Run Go tests that touch the DB with env loaded: `set -a; source .env; set +a; go test ./...`.
 
@@ -48,4 +49,5 @@ Self-hosted on the **Mac Studio** behind **LiteLLM**, **RAG** over Apolaki docs.
 | 2026-06-05 | P0.3 — BGE-M3 embedding server + LiteLLM route | ✅ Done |
 | 2026-06-05 | P0.4 — BGE-M3 embeddings Go client (internal/embed) | ✅ Done |
 | 2026-06-05 | P0.5 — Register SEA-LION 9B generation model in LiteLLM | ✅ Done |
-| — | P0.6 — Synthetic seed-data generator (Python) | ⏳ Next |
+| 2026-06-05 | P0.6 — Synthetic seed-data generator (Python) | ✅ Done |
+| — | P0.7 — Ingestion: chunk + embed + upsert + ingest CLI | ⏳ Next |
