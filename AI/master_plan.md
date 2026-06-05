@@ -30,7 +30,9 @@ Self-hosted on the **Mac Studio** behind **LiteLLM**, **RAG** over Apolaki docs.
   - ✅ **P2.1 done** — `internal/prompt/modes.go`: `Mode{Name,Audience,System}` + `Customer`/`Buyer`/`Installer` personas + `ModeByName` (defaults Customer). `prompt.Assemble` now delegates to new `AssembleFor(mode,…)`. `cmd/server`'s `/assistant/chat` reads `mode` from the request body and threads it through retrieval (`mode.Audience`), persona (`AssembleFor`), and turn logging (`StartConversation(…, mode, …)`). Dropped now-dead `Deps.Audience`. TDD green, full suite + `go vet` clean. **Backend only** — see follow-ups.
   - ✅ **P2.2 done** — seed corpus extended in `data/generate_seed.py`: +3 buyer docs (sizing guide, TCO/financing, warranty checklist) +3 installer docs (AP-450W mounting spec, AP-INV-5K commissioning, PEC safety/code reminders), all Taglish + Apolaki-branded. Now 13 docs (7 customer / 3 buyer / 3 installer), deterministic re-run verified; re-ingested into pgvector (truncate + `go run ./cmd/ingest` → 13 docs / 13 chunks, audiences confirmed). Buyer/installer modes now retrieve real chunks.
   - ✅ **P2.3 done** — `internal/httpapi/index.html` test page gained a customer/buyer/installer `<select id="mode">`; chat request body now sends `mode`. `//go:embed` picks it up automatically. Build/vet/httpapi tests green.
-  - ⏳ **Follow-ups:** LoRA fine-tune still pending; live in-browser smoke of buyer/installer modes (open `GET /`, pick a mode, confirm audience-appropriate sources) recommended as a manual check.
+  - ✅ **P2.4 done** — topic-gate fix found during live smoke: installer technical jargon/product codes (torque, clamp, MPPT, voltage, AP-450W, AP-INV-5K…) were wrongly redirected as off-topic. Added installer/buyer technical vocabulary to `internal/topicgate` keywords (TDD: failing test → fix). Off-topic cases still rejected.
+  - ✅ **Live e2e verified** — server on :8090; each mode retrieves strictly its own audience (installer→3 installer datasheets, buyer→3 buyer FAQs, customer→customer FAQs); `conversations.mode` persisted per turn (installer/buyer/customer rows confirmed); installer Q "anong torque…AP-450W?" → grounded "16-20 Nm" citing the installer mounting spec.
+  - ⏳ **Follow-ups:** LoRA fine-tune still pending.
 - ⬜ Phase 3 — Advocacy features + scale (cloud GPU once past ~1,000 users)
 
 ## Locked Decisions (see PRD §3)
@@ -70,3 +72,4 @@ Self-hosted on the **Mac Studio** behind **LiteLLM**, **RAG** over Apolaki docs.
 | 2026-06-05 | P2.1 — buyer/installer mode plumbing (prompt modes + chat wiring) | ✅ Done |
 | 2026-06-05 | P2.2 — buyer/installer seed docs + re-ingest | ✅ Done |
 | 2026-06-05 | P2.3 — mode selector in HTML test page | ✅ Done |
+| 2026-06-05 | P2.4 — topic-gate installer/buyer vocabulary + live e2e verify | ✅ Done |

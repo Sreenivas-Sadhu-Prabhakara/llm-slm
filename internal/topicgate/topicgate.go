@@ -15,6 +15,9 @@ var keywords = []string{
 	"kw", "kwh", "kilowatt", "apolaki", "installer", "installation",
 	"instala", "wiring", "rooftop", "bubong", "enerhiya", "photovoltaic",
 	"financing", "hulugan",
+	// installer/buyer technical + product vocabulary (modes beyond customer):
+	"torque", "clamp", "mounting", "mppt", "voltage", "voltahe", "ampere",
+	"commission", "datasheet", "warranty", "ap-450", "ap-inv",
 }
 
 // IsSolarRelated reports whether q plausibly concerns solar energy or Apolaki.

@@ -19,6 +19,22 @@ func TestSolarQuestionsPass(t *testing.T) {
 	}
 }
 
+func TestInstallerTechnicalQuestionsPass(t *testing.T) {
+	// Installer-mode jargon and product codes must not be rejected as off-topic
+	// even when they omit consumer-facing words like "solar"/"panel".
+	cases := []string{
+		"anong torque sa clamp bolts ng AP-450W?",
+		"ano ang MPPT window at max DC input voltage ng AP-INV-5K?",
+		"paano i-commission ang inverter nang ligtas?",
+		"anong mounting clearance ang kailangan sa bubong?",
+	}
+	for _, q := range cases {
+		if !IsSolarRelated(q) {
+			t.Errorf("expected installer technical question to pass: %q", q)
+		}
+	}
+}
+
 func TestOffTopicQuestionsRejected(t *testing.T) {
 	cases := []string{
 		"sino panalo sa NBA finals?",
