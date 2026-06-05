@@ -51,6 +51,7 @@ func main() {
 		Pool:         pool,
 		GenModel:     cfg.GenModel,
 		JWTSecret:    cfg.JWTSecret,
+		ShortPrompt:  cfg.UseShortPrompt,
 	})
 
 	log.Printf("apolaki solar-assistant listening on %s (chat UI at /)", *addr)

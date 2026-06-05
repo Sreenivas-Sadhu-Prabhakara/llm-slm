@@ -13,6 +13,7 @@ type Config struct {
 	EmbedModel      string
 	GenModel        string
 	JWTSecret       string // ASSISTANT_JWT_SECRET; empty = permissive dev auth
+	UseShortPrompt  bool   // USE_SHORT_PROMPT; true when serving the tuned model
 }
 
 func get(key, def string) string {
@@ -32,6 +33,7 @@ func Load() (Config, error) {
 		EmbedModel:      get("EMBED_MODEL", "bge-m3"),
 		GenModel:        get("GEN_MODEL", "sea-lion-9b"),
 		JWTSecret:       os.Getenv("ASSISTANT_JWT_SECRET"),
+		UseShortPrompt:  os.Getenv("USE_SHORT_PROMPT") == "true" || os.Getenv("USE_SHORT_PROMPT") == "1",
 	}
 	if c.DatabaseURL == "" {
 		return Config{}, errors.New("DATABASE_URL is required")

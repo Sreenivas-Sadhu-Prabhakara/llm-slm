@@ -50,6 +50,7 @@ type Deps struct {
 	GenModel     string // model label recorded with each turn
 	JWTSecret    string // empty => permissive dev auth
 	TopK         int    // retrieval depth (default 4)
+	ShortPrompt  bool   // use the distilled short persona (tuned model)
 }
 
 type server struct {
@@ -161,6 +162,9 @@ func (s *server) chat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sys, user := prompt.AssembleFor(m, req.Message, chunks)
+	if s.d.ShortPrompt {
+		sys, user = prompt.AssembleForShort(m, req.Message, chunks)
+	}
 	if pc, perr := s.d.Personalizer.Context(ctx, deref(userID)); perr == nil && pc != "" {
 		user = "USER CONTEXT: " + pc + "\n\n" + user
 	}

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/apolaki/solar-assistant/internal/prompt"
 	"github.com/apolaki/solar-assistant/internal/retriever"
 )
 
@@ -23,14 +24,37 @@ func (f *fakeRetriever) Search(ctx context.Context, q string, tenant *string, au
 type fakeGenerator struct {
 	called bool
 	toks   []string
+	gotSys string
 }
 
 func (f *fakeGenerator) Stream(ctx context.Context, sys, user string, onToken func(string)) error {
 	f.called = true
+	f.gotSys = sys
 	for _, t := range f.toks {
 		onToken(t)
 	}
 	return nil
+}
+
+func TestChatUsesShortPromptWhenEnabled(t *testing.T) {
+	gen := &fakeGenerator{toks: []string{"ok"}}
+	h := Handler(Deps{
+		Retriever: &fakeRetriever{chunks: []retriever.Chunk{{Title: "Spec", Content: "450W"}}},
+		Generator: gen, Logger: &fakeLogger{}, GenModel: "sea-lion-taglish", ShortPrompt: true,
+	})
+	post(h, "/assistant/chat", `{"message":"anong specs ng panel?","mode":"installer"}`, nil)
+	if gen.gotSys != prompt.Installer.Short {
+		t.Fatalf("expected short installer persona, got %q", gen.gotSys)
+	}
+}
+
+func TestChatUsesFullPromptByDefault(t *testing.T) {
+	gen := &fakeGenerator{toks: []string{"ok"}}
+	h := newTestServer(&fakeRetriever{chunks: []retriever.Chunk{{Title: "Spec", Content: "450W"}}}, gen, &fakeLogger{})
+	post(h, "/assistant/chat", `{"message":"anong specs ng panel?","mode":"installer"}`, nil)
+	if gen.gotSys != prompt.Installer.System {
+		t.Fatalf("expected full installer persona by default, got %q", gen.gotSys)
+	}
 }
 
 type fakeLogger struct {
