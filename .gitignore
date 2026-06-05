@@ -38,3 +38,12 @@ dist/
 /data/raw/
 
 data/seed/
+
+# Phase 2 LoRA — heavy/derived training artifacts (scripts + questions.jsonl are versioned)
+training/models/
+training/adapters/
+training/fused/
+training/data/
+training/.venv/
+__pycache__/
+.pytest_cache/
