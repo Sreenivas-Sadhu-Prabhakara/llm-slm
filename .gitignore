@@ -1,0 +1,38 @@
+# macOS
+.DS_Store
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+*.key
+sa-key.json
+
+# Logs
+*.log
+
+# Go
+/bin/
+*.exe
+*.test
+*.out
+vendor/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.ipynb_checkpoints/
+
+# Node (frontend widget)
+node_modules/
+dist/
+
+# Models & large data — never commit these
+/models/
+*.gguf
+*.safetensors
+*.bin
+/data/raw/
