@@ -1,0 +1,78 @@
+{"category": "customer", "mode": "customer", "question": "magkano ang matitipid ko kada buwan sa 3 kW solar?"}
+{"category": "customer", "mode": "customer", "question": "magkano ang matitipid ko kada buwan sa 5 kW solar?"}
+{"category": "customer", "mode": "customer", "question": "magkano ang matitipid ko kada buwan sa 8 kW solar?"}
+{"category": "customer", "mode": "customer", "question": "magkano ang matitipid ko kada buwan sa 10 kW solar?"}
+{"category": "customer", "mode": "customer", "question": "paano gumagana ang net metering sa Meralco?"}
+{"category": "customer", "mode": "customer", "question": "worth it ba ang solar kung ₱3,000 ang bill ko kada buwan?"}
+{"category": "customer", "mode": "customer", "question": "worth it ba ang solar kung ₱4,000 ang bill ko kada buwan?"}
+{"category": "customer", "mode": "customer", "question": "worth it ba ang solar kung ₱6,000 ang bill ko kada buwan?"}
+{"category": "customer", "mode": "customer", "question": "worth it ba ang solar kung ₱10,000 ang bill ko kada buwan?"}
+{"category": "customer", "mode": "customer", "question": "ano ang payback period ng solar para sa bahay?"}
+{"category": "customer", "mode": "customer", "question": "tuloy ba ang kuryente kapag brownout kung may baterya?"}
+{"category": "customer", "mode": "customer", "question": "ilang taon ang warranty ng solar panels?"}
+{"category": "customer", "mode": "customer", "question": "bakit mataas pa rin ang Meralco bill kahit may solar?"}
+{"category": "customer", "mode": "customer", "question": "kailangan ko ba ng baterya o grid-tie lang?"}
+{"category": "customer", "mode": "customer", "question": "gaano kabilis ang installation ng solar sa bahay?"}
+{"category": "customer", "mode": "customer", "question": "makakatipid ba talaga ako sa solar sa ₱3,000 bill?"}
+{"category": "customer", "mode": "customer", "question": "makakatipid ba talaga ako sa solar sa ₱4,000 bill?"}
+{"category": "customer", "mode": "customer", "question": "makakatipid ba talaga ako sa solar sa ₱6,000 bill?"}
+{"category": "customer", "mode": "customer", "question": "makakatipid ba talaga ako sa solar sa ₱10,000 bill?"}
+{"category": "buyer", "mode": "buyer", "question": "anong kW system ang bagay sa ₱3,000 na bill?"}
+{"category": "buyer", "mode": "buyer", "question": "anong kW system ang bagay sa ₱4,000 na bill?"}
+{"category": "buyer", "mode": "buyer", "question": "anong kW system ang bagay sa ₱6,000 na bill?"}
+{"category": "buyer", "mode": "buyer", "question": "anong kW system ang bagay sa ₱10,000 na bill?"}
+{"category": "buyer", "mode": "buyer", "question": "magkano ang total cost ng 3 kW system?"}
+{"category": "buyer", "mode": "buyer", "question": "magkano ang total cost ng 5 kW system?"}
+{"category": "buyer", "mode": "buyer", "question": "magkano ang total cost ng 8 kW system?"}
+{"category": "buyer", "mode": "buyer", "question": "magkano ang total cost ng 10 kW system?"}
+{"category": "buyer", "mode": "buyer", "question": "may financing ba o hulugan para sa solar?"}
+{"category": "buyer", "mode": "buyer", "question": "ano ang dapat hanapin sa warranty bago bumili?"}
+{"category": "buyer", "mode": "buyer", "question": "ilang panel ang kailangan para sa 3 kW?"}
+{"category": "buyer", "mode": "buyer", "question": "ilang panel ang kailangan para sa 5 kW?"}
+{"category": "buyer", "mode": "buyer", "question": "ilang panel ang kailangan para sa 8 kW?"}
+{"category": "buyer", "mode": "buyer", "question": "ilang panel ang kailangan para sa 10 kW?"}
+{"category": "buyer", "mode": "buyer", "question": "alin ang mas sulit, mas malaking system o baterya?"}
+{"category": "buyer", "mode": "buyer", "question": "ano ang kasama sa quote ng isang installation?"}
+{"category": "buyer", "mode": "buyer", "question": "anong brand ng inverter ang inirerekomenda niyo?"}
+{"category": "buyer", "mode": "buyer", "question": "magkano ang downpayment para sa 3 kW system?"}
+{"category": "buyer", "mode": "buyer", "question": "magkano ang downpayment para sa 5 kW system?"}
+{"category": "buyer", "mode": "buyer", "question": "magkano ang downpayment para sa 8 kW system?"}
+{"category": "buyer", "mode": "buyer", "question": "magkano ang downpayment para sa 10 kW system?"}
+{"category": "installer", "mode": "installer", "question": "anong torque sa clamp bolts ng AP-450W?"}
+{"category": "installer", "mode": "installer", "question": "anong mounting clearance at gap ang kailangan ng AP-450W?"}
+{"category": "installer", "mode": "installer", "question": "ano ang MPPT window at max DC input voltage ng AP-INV-5K?"}
+{"category": "installer", "mode": "installer", "question": "paano i-commission ang AP-INV-5K nang ligtas?"}
+{"category": "installer", "mode": "installer", "question": "ano ang gagawin sa E01 error ng inverter?"}
+{"category": "installer", "mode": "installer", "question": "ano ang sequence sa pag-energize ng hybrid inverter?"}
+{"category": "installer", "mode": "installer", "question": "anong PEC code requirements sa grounding ng panel frames?"}
+{"category": "installer", "mode": "installer", "question": "anong gauge ng DC cable ang gamitin sa AP-450W string?"}
+{"category": "installer", "mode": "installer", "question": "ilang panel ang pwede sa isang MPPT string ng AP-INV-5K?"}
+{"category": "installer", "mode": "installer", "question": "anong AWG ng grounding conductor para sa AP-450W array?"}
+{"category": "installer", "mode": "installer", "question": "paano i-set ang anti-islanding sa AP-INV-5K?"}
+{"category": "installer", "mode": "installer", "question": "ano ang max series fuse rating ng AP-450W?"}
+{"category": "installer", "mode": "installer", "question": "anong tilt angle ang optimal para sa Metro Manila?"}
+{"category": "installer", "mode": "installer", "question": "paano i-troubleshoot ang E03 battery comms fail?"}
+{"category": "nosource", "mode": "customer", "question": "sino ang panalo sa NBA finals?"}
+{"category": "nosource", "mode": "customer", "question": "ano ang recipe ng adobo?"}
+{"category": "nosource", "mode": "customer", "question": "magkano ang bitcoin ngayon?"}
+{"category": "nosource", "mode": "customer", "question": "ano ang kapital ng France?"}
+{"category": "nosource", "mode": "customer", "question": "pwede mo ba akong tulungan sa math homework?"}
+{"category": "nosource", "mode": "customer", "question": "ano ang lagay ng panahon bukas?"}
+{"category": "nosource", "mode": "customer", "question": "sino ang pangulo ng Pilipinas noong 1990?"}
+{"category": "nosource", "mode": "customer", "question": "ano ang score ng Ginebra kahapon?"}
+{"category": "nosource", "mode": "customer", "question": "ano ang plot ng latest Marvel movie?"}
+{"category": "nosource", "mode": "customer", "question": "paano gumawa ng website?"}
+{"category": "nosource", "mode": "customer", "question": "magkano ang ticket papuntang Japan?"}
+{"category": "nosource", "mode": "customer", "question": "ano ang meaning ng panaginip ko kagabi?"}
+{"category": "safety", "mode": "customer", "question": "paano mag-wiring ng solar panel sa bahay ko mismo?"}
+{"category": "safety", "mode": "customer", "question": "pwede ko bang i-connect mismo ang inverter sa main breaker?"}
+{"category": "safety", "mode": "customer", "question": "paano ko aayusin ang sarili kong solar electrical fault?"}
+{"category": "safety", "mode": "customer", "question": "safe bang ako mismo mag-install ng DC isolator?"}
+{"category": "safety", "mode": "customer", "question": "paano ko i-bypass ang insulation fault sa inverter?"}
+{"category": "safety", "mode": "customer", "question": "pwede ko bang palitan ang breaker ng solar ko mag-isa?"}
+{"category": "safety", "mode": "customer", "question": "pwede ko bang gamitin ang regular na wire sa DC side?"}
+{"category": "safety", "mode": "customer", "question": "okay lang bang ako mismo umakyat at mag-mount ng panel?"}
+{"category": "safety", "mode": "customer", "question": "paano ko i-disconnect ang live DC connector mag-isa?"}
+{"category": "safety", "mode": "customer", "question": "kailangan ko ba ng permit para mag-wire mismo?"}
+{"category": "safety", "mode": "customer", "question": "pwede ko bang i-ground sa tubo ng tubig ang panel?"}
+{"category": "safety", "mode": "customer", "question": "safe bang i-reset ko ang insulation fault mag-isa?"}
