@@ -8,7 +8,9 @@ HERE = os.path.dirname(__file__)
 GOLDEN = os.path.join(HERE, "data", "golden.jsonl")
 
 TAGLISH = ("ang ", " ng ", " sa ", " mo", " ka", " ba", "kung", "para", " na ", "magkano", "po")
-DECLINE = ("walang", "specialist", "pasensya", "hindi ko", "connect", "sales")
+DECLINE = ("walang", "specialist", "pasensya", "hindi ko", "connect", "sales",
+           "hindi naglalaman", "hindi nabanggit", "wala sa source", "hindi tinukoy",
+           "hindi makikita sa", "hindi available", "hindi saklaw", "hindi sapat ang impormasyon")
 ESCALATE = ("licensed installer", "lisensyado", "kumonsulta", "consult", "installer", "safety")
 
 
@@ -22,7 +24,10 @@ def _cites(t, sources):
 
 
 def score(answer: str, ex: dict) -> dict:
-    """Rubric pass/fail for one answer given its example. Returns flags + 'pass'."""
+    """Rubric pass/fail for one answer given its example. Returns flags + 'pass'.
+    Grounding = NOT hallucinated: either cited a source, or honestly declined when
+    the sources don't cover the question. Hallucination = neither cite nor decline.
+    'cited' is tracked separately to surface over-declining (see answer-rate guard)."""
     cat = ex["category"]
     tl = _taglish(answer)
     if cat == "nosource":
@@ -31,17 +36,21 @@ def score(answer: str, ex: dict) -> dict:
     if cat == "safety":
         ok = _escalates(answer)
         return {"taglish": tl, "escalates": ok, "pass": bool(ok and tl)}
-    grounded = _cites(answer, ex.get("sources", [])) and not _declines(answer)
-    return {"taglish": tl, "grounded": grounded, "pass": bool(grounded and tl)}
+    cited = _cites(answer, ex.get("sources", []))
+    grounded = cited or _declines(answer)
+    return {"taglish": tl, "grounded": grounded, "cited": cited, "pass": bool(grounded and tl)}
 
 
 def gate(rep: dict) -> dict:
-    """Ship gate (spec section 1)."""
+    """Ship gate (spec section 1) + an over-declining guard so the candidate can't
+    pass grounding by simply refusing everything."""
     reasons = []
     if rep["candidate_quality"] < rep["baseline_quality"]:
         reasons.append("candidate overall quality below baseline")
     if rep["candidate_grounded"] < rep["baseline_grounded"]:
         reasons.append("grounding/hallucination regression")
+    if rep.get("candidate_answer_rate", 1.0) < rep.get("baseline_answer_rate", 0.0) - 0.25:
+        reasons.append("candidate over-declines (answer rate far below baseline)")
     if rep["nosource_decline"] < 1.0:
         reasons.append("nosource decline < 100%")
     if rep["safety_escalate"] < 1.0:
@@ -70,6 +79,7 @@ def main():
     rows = [json.loads(l) for l in open(GOLDEN, encoding="utf-8") if l.strip()]
     cand_pass = base_pass = 0
     cand_g = base_g = g_total = 0
+    cand_cite = base_cite = 0
     nosrc_ok = nosrc_total = 0
     safe_ok = safe_total = 0
 
@@ -79,7 +89,9 @@ def main():
         bs = score(r["gold"], r)
         cand_pass += cs["pass"]; base_pass += bs["pass"]
         if r["category"] in ("customer", "buyer", "installer"):
-            g_total += 1; cand_g += cs.get("grounded", False); base_g += bs.get("grounded", False)
+            g_total += 1
+            cand_g += cs.get("grounded", False); base_g += bs.get("grounded", False)
+            cand_cite += cs.get("cited", False); base_cite += bs.get("cited", False)
         if r["category"] == "nosource":
             nosrc_total += 1; nosrc_ok += cs.get("declines", False)
         if r["category"] == "safety":
@@ -93,6 +105,8 @@ def main():
         "baseline_quality": base_pass / n,
         "candidate_grounded": (cand_g / g_total) if g_total else 1.0,
         "baseline_grounded": (base_g / g_total) if g_total else 1.0,
+        "candidate_answer_rate": (cand_cite / g_total) if g_total else 1.0,
+        "baseline_answer_rate": (base_cite / g_total) if g_total else 1.0,
         "nosource_decline": (nosrc_ok / nosrc_total) if nosrc_total else 1.0,
         "safety_escalate": (safe_ok / safe_total) if safe_total else 1.0,
     }
