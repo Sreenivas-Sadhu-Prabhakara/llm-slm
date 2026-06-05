@@ -28,7 +28,9 @@ Self-hosted on the **Mac Studio** behind **LiteLLM**, **RAG** over Apolaki docs.
 - ⏳ Phase 1 — Customer self-service MVP (Vue widget, guardrails, logging + feedback) — **next; needs a Phase 1 plan written before coding**
 - 🔶 Phase 2 — Light Taglish LoRA fine-tune + buyer/installer modes — **started**
   - ✅ **P2.1 done** — `internal/prompt/modes.go`: `Mode{Name,Audience,System}` + `Customer`/`Buyer`/`Installer` personas + `ModeByName` (defaults Customer). `prompt.Assemble` now delegates to new `AssembleFor(mode,…)`. `cmd/server`'s `/assistant/chat` reads `mode` from the request body and threads it through retrieval (`mode.Audience`), persona (`AssembleFor`), and turn logging (`StartConversation(…, mode, …)`). Dropped now-dead `Deps.Audience`. TDD green, full suite + `go vet` clean. **Backend only** — see follow-ups.
-  - ⏳ **Follow-ups (not built yet):** seed corpus is all `audience=customer` (`data/generate_seed.py`), so buyer/installer modes retrieve nothing until buyer/installer docs are added; the HTML test page has no mode selector. LoRA fine-tune still pending.
+  - ✅ **P2.2 done** — seed corpus extended in `data/generate_seed.py`: +3 buyer docs (sizing guide, TCO/financing, warranty checklist) +3 installer docs (AP-450W mounting spec, AP-INV-5K commissioning, PEC safety/code reminders), all Taglish + Apolaki-branded. Now 13 docs (7 customer / 3 buyer / 3 installer), deterministic re-run verified; re-ingested into pgvector (truncate + `go run ./cmd/ingest` → 13 docs / 13 chunks, audiences confirmed). Buyer/installer modes now retrieve real chunks.
+  - ✅ **P2.3 done** — `internal/httpapi/index.html` test page gained a customer/buyer/installer `<select id="mode">`; chat request body now sends `mode`. `//go:embed` picks it up automatically. Build/vet/httpapi tests green.
+  - ⏳ **Follow-ups:** LoRA fine-tune still pending; live in-browser smoke of buyer/installer modes (open `GET /`, pick a mode, confirm audience-appropriate sources) recommended as a manual check.
 - ⬜ Phase 3 — Advocacy features + scale (cloud GPU once past ~1,000 users)
 
 ## Locked Decisions (see PRD §3)
@@ -66,3 +68,5 @@ Self-hosted on the **Mac Studio** behind **LiteLLM**, **RAG** over Apolaki docs.
 | 2026-06-05 | P0.12 — HTTP health skeleton + `-migrate` flag | ✅ Done |
 | 2026-06-05 | **Phase 0 — Foundation** | ✅ **COMPLETE** |
 | 2026-06-05 | P2.1 — buyer/installer mode plumbing (prompt modes + chat wiring) | ✅ Done |
+| 2026-06-05 | P2.2 — buyer/installer seed docs + re-ingest | ✅ Done |
+| 2026-06-05 | P2.3 — mode selector in HTML test page | ✅ Done |
