@@ -16,7 +16,8 @@ Self-hosted on the **Mac Studio** behind **LiteLLM**, **RAG** over Apolaki docs.
 - ✅ **P0.2 done** — `internal/db.Migrate` (idempotent, `schema_migrations`-tracked) + schema: knowledge_documents/chunks (vector(1024)+HNSW), conversations/messages/feedback. Integration test green. Commit `23e54a4`.
 - ✅ **P0.3 done** — `embeddings-server/` (FastAPI, OpenAI-compatible `/v1/embeddings`, BGE-M3 1024-dim dense) on `:8100`; registered `bge-m3` in LiteLLM (`:4000`), restarted, verified `dim: 1024` end-to-end. Commit `4a3e3ec`. **Notes:** model cached at `~/.cache/huggingface/hub/models--BAAI--bge-m3` (~4.3GB, downloaded once); venv had no console scripts so start via `.venv/bin/python -m uvicorn server:app --host 127.0.0.1 --port 8100`; `litellm_config.yaml` (in `agent_skills/`, unversioned) gained a `bge-m3` route block.
 - ✅ **P0.4 done** — `internal/embed` Go client (`New`/`Embed`) hits OpenAI-compatible `/embeddings`; TDD via httptest fake, returns 1024-dim `[]float64`. `go vet` clean; full suite (config/db/embed) green. Commit `97d7fbd`.
-- ⏳ **Next:** execute **P0.5** (register `sea-lion-9b` generation model in LiteLLM — Gemma-SEA-LION-v3-9B-IT GGUF via Ollama as primary, license-clean fallback; 32B Qwen MLX stays as heavy fallback).
+- ✅ **P0.5 done** — registered `sea-lion-9b` generation route in LiteLLM (`:4000`): `ollama_chat/hf.co/aisingapore/Gemma-SEA-LION-v3-9B-IT-GGUF:Q4_K_M` (5.8GB GGUF, pulled into Ollama), 600s timeout, fallback `sea-lion-9b → qwen-ollama`. Restarted LiteLLM, smoke-test green (Taglish `SEA_LION_OK`, `model: sea-lion-9b`). **Infra-only** (no service-repo code); `litellm_config.yaml` in `agent_skills/` (unversioned). Memory `local-serving-stack` updated.
+- ⏳ **Next:** execute **P0.6** (synthetic seed-data generator — Python pipeline producing datasheets + FAQ + tickets → JSONL).
 - ⬜ Phase 0 — Foundation (Go service + RAG + synthetic data + CLI test harness)
 - ⬜ Phase 1 — Customer self-service MVP (Vue widget, guardrails, logging + feedback)
 - ⬜ Phase 2 — Light Taglish LoRA fine-tune + buyer/installer modes
@@ -30,7 +31,7 @@ Self-hosted on the **Mac Studio** behind **LiteLLM**, **RAG** over Apolaki docs.
 - **Guardrails:** 3-layer solar-only (topic gate → grounded-only → safety/escalate).
 
 ## Next Session
-- Execute **P0.5** (register `sea-lion-9b` in `agent_skills/litellm_config.yaml` — Gemma-SEA-LION-v3-9B-IT GGUF loaded into Ollama as primary generation model, license-clean fallback; 32B Qwen MLX stays heavy fallback) from `AI/docs/tasks/2026-06-05-phase-0-foundation.md`, one task per session per the ai-wf loop. Note: Step 1 fetches a ~5–6GB GGUF.
+- Execute **P0.6** (synthetic seed-data generator, Python — `data/generate_seed.py` producing datasheets + FAQ + tickets → JSONL in `data/seed/`) from `AI/docs/tasks/2026-06-05-phase-0-foundation.md`, one task per session per the ai-wf loop.
 - Confirm infra up first: `colima start && docker-compose up -d` (Postgres), `curl :4000/health/liveliness`, `:8000/health`, `:11434/api/tags`, and the **embeddings server** `:8100/health` (start: `cd embeddings-server && nohup .venv/bin/python -m uvicorn server:app --host 127.0.0.1 --port 8100 > /tmp/bge.log 2>&1 &`). None auto-start after reboot.
 - Run Go tests that touch the DB with env loaded: `set -a; source .env; set +a; go test ./...`.
 
@@ -46,4 +47,5 @@ Self-hosted on the **Mac Studio** behind **LiteLLM**, **RAG** over Apolaki docs.
 | 2026-06-05 | P0.2 — migrations runner + HNSW schema | ✅ Done |
 | 2026-06-05 | P0.3 — BGE-M3 embedding server + LiteLLM route | ✅ Done |
 | 2026-06-05 | P0.4 — BGE-M3 embeddings Go client (internal/embed) | ✅ Done |
-| — | P0.5 — Register SEA-LION 9B generation model in LiteLLM | ⏳ Next |
+| 2026-06-05 | P0.5 — Register SEA-LION 9B generation model in LiteLLM | ✅ Done |
+| — | P0.6 — Synthetic seed-data generator (Python) | ⏳ Next |
