@@ -32,7 +32,12 @@ Self-hosted on the **Mac Studio** behind **LiteLLM**, **RAG** over Apolaki docs.
   - ✅ **P2.3 done** — `internal/httpapi/index.html` test page gained a customer/buyer/installer `<select id="mode">`; chat request body now sends `mode`. `//go:embed` picks it up automatically. Build/vet/httpapi tests green.
   - ✅ **P2.4 done** — topic-gate fix found during live smoke: installer technical jargon/product codes (torque, clamp, MPPT, voltage, AP-450W, AP-INV-5K…) were wrongly redirected as off-topic. Added installer/buyer technical vocabulary to `internal/topicgate` keywords (TDD: failing test → fix). Off-topic cases still rejected.
   - ✅ **Live e2e verified** — server on :8090; each mode retrieves strictly its own audience (installer→3 installer datasheets, buyer→3 buyer FAQs, customer→customer FAQs); `conversations.mode` persisted per turn (installer/buyer/customer rows confirmed); installer Q "anong torque…AP-450W?" → grounded "16-20 Nm" citing the installer mounting spec.
-  - ⏳ **Follow-ups:** LoRA fine-tune still pending.
+  - ✅ **P2-LoRA done — Taglish voice LoRA (prompt distillation), SHIPPED.** Plan: `AI/docs/tasks/2026-06-05-phase-2-taglish-lora.md`; spec: `AI/docs/PRDs/2026-06-05-phase-2-taglish-lora-design.md`. Self-distilled SEA-LION 9B so the tuned model reproduces the full persona from a SHORT system prompt (frees 16K context).
+    - **Pipeline:** `internal/prompt` short personas + `AssembleForShort`; `internal/distill` + `cmd/distill` (reuses prod retrieval/prompt/generation → 78 self-distilled examples); `training/` Python+MLX (`make_questions.py` 78-q bank, `curate.py` kept 64/78 → train 47 / valid 8 / test 9 stratified, `lora_config.yaml`+`train.sh`, `eval.py` gate). Trained via `mlx_lm.lora` (400 iters, rank 16, train loss 0.21→0.027; val rose after iter 200 = mild overfit, iter-200 ckpt kept as fallback), fused → `training/fused/sea-lion-taglish` (17GB bf16).
+    - **Eval GATE = SHIP:** candidate (tuned+short) vs baseline (base+full) on golden set: quality 1.0 = 1.0, grounding 1.0 = 1.0, nosource-decline 100%, safety-escalate 100%, answer-rate 0.83 (within guard). Prompt distillation preserved all guardrail behaviors.
+    - **Served:** `mlx_lm.server :8001` → LiteLLM primary `sea-lion-9b` (Ollama GGUF demoted to `sea-lion-9b-gguf` fallback, then qwen-ollama); `USE_SHORT_PROMPT=true`. **Live e2e:** installer→"16-20 Nm" (datasheet cite), buyer→"₱300,000" (TCO cite), off-topic→redirect. Full Go suite + `go vet` + 12 `training/` pytest green.
+    - **Rollback:** `USE_SHORT_PROMPT=false` + revert LiteLLM `sea-lion-9b` route to GGUF primary + restart LiteLLM (config-gated, no data loss).
+  - ⏳ **Follow-ups:** retrain on REAL logged chats once the flywheel accumulates (pipeline is built to re-run); optional two-tier routing; larger question bank for a richer golden eval.
 - ⬜ Phase 3 — Advocacy features + scale (cloud GPU once past ~1,000 users)
 
 ## Locked Decisions (see PRD §3)
@@ -73,3 +78,4 @@ Self-hosted on the **Mac Studio** behind **LiteLLM**, **RAG** over Apolaki docs.
 | 2026-06-05 | P2.2 — buyer/installer seed docs + re-ingest | ✅ Done |
 | 2026-06-05 | P2.3 — mode selector in HTML test page | ✅ Done |
 | 2026-06-05 | P2.4 — topic-gate installer/buyer vocabulary + live e2e verify | ✅ Done |
+| 2026-06-05 | P2-LoRA — Taglish voice LoRA (self-distill, prompt distillation): pipeline + train + eval gate | ✅ **SHIPPED** |
