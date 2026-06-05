@@ -12,6 +12,7 @@ type Config struct {
 	LiteLLMAPIKey   string
 	EmbedModel      string
 	GenModel        string
+	JWTSecret       string // ASSISTANT_JWT_SECRET; empty = permissive dev auth
 }
 
 func get(key, def string) string {
@@ -30,6 +31,7 @@ func Load() (Config, error) {
 		LiteLLMAPIKey:   get("LITELLM_API_KEY", "local"),
 		EmbedModel:      get("EMBED_MODEL", "bge-m3"),
 		GenModel:        get("GEN_MODEL", "sea-lion-9b"),
+		JWTSecret:       os.Getenv("ASSISTANT_JWT_SECRET"),
 	}
 	if c.DatabaseURL == "" {
 		return Config{}, errors.New("DATABASE_URL is required")

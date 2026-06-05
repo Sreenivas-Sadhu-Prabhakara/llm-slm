@@ -1,21 +1,28 @@
-// Command server is the HTTP skeleton for the assistant: a health endpoint plus
-// an optional -migrate flag to apply DB migrations and exit.
+// Command server runs the Apolaki solar-assistant HTTP service: the streaming
+// chat API, feedback hook, health endpoint, and local test page. The -migrate
+// flag applies DB migrations and exits.
 package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"log"
 	"net/http"
 	"os"
 
+	"github.com/apolaki/solar-assistant/internal/chatlog"
 	"github.com/apolaki/solar-assistant/internal/config"
 	"github.com/apolaki/solar-assistant/internal/db"
+	"github.com/apolaki/solar-assistant/internal/embed"
+	"github.com/apolaki/solar-assistant/internal/generator"
+	"github.com/apolaki/solar-assistant/internal/httpapi"
+	"github.com/apolaki/solar-assistant/internal/personalizer"
+	"github.com/apolaki/solar-assistant/internal/retriever"
 )
 
 func main() {
 	migrateOnly := flag.Bool("migrate", false, "run migrations and exit")
+	addr := flag.String("addr", ":8090", "listen address")
 	flag.Parse()
 
 	cfg, err := config.Load()
@@ -35,16 +42,17 @@ func main() {
 		os.Exit(0)
 	}
 
-	http.HandleFunc("/assistant/health", func(w http.ResponseWriter, r *http.Request) {
-		status := map[string]string{"status": "ok"}
-		if err := pool.Ping(r.Context()); err != nil {
-			w.WriteHeader(http.StatusServiceUnavailable)
-			status["status"] = "db_unreachable"
-		}
-		if err := json.NewEncoder(w).Encode(status); err != nil {
-			log.Printf("encode health: %v", err)
-		}
+	emb := embed.New(cfg.LiteLLMBaseURL, cfg.LiteLLMAPIKey, cfg.EmbedModel)
+	handler := httpapi.Handler(httpapi.Deps{
+		Retriever:    retriever.New(pool, emb),
+		Generator:    generator.New(cfg.LiteLLMBaseURL, cfg.LiteLLMAPIKey, cfg.GenModel),
+		Personalizer: personalizer.Noop{},
+		Logger:       chatlog.New(pool),
+		Pool:         pool,
+		GenModel:     cfg.GenModel,
+		JWTSecret:    cfg.JWTSecret,
 	})
-	log.Println("listening on :8090")
-	log.Fatal(http.ListenAndServe(":8090", nil))
+
+	log.Printf("apolaki solar-assistant listening on %s (chat UI at /)", *addr)
+	log.Fatal(http.ListenAndServe(*addr, handler))
 }
