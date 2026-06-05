@@ -50,7 +50,6 @@ type Deps struct {
 	GenModel     string // model label recorded with each turn
 	JWTSecret    string // empty => permissive dev auth
 	TopK         int    // retrieval depth (default 4)
-	Audience     string // retrieval audience (default "customer")
 }
 
 type server struct {
@@ -62,9 +61,6 @@ type server struct {
 func Handler(d Deps) http.Handler {
 	if d.TopK <= 0 {
 		d.TopK = 4
-	}
-	if d.Audience == "" {
-		d.Audience = "customer"
 	}
 	if d.Personalizer == nil {
 		d.Personalizer = personalizer.Noop{}
@@ -101,6 +97,7 @@ func (s *server) health(w http.ResponseWriter, r *http.Request) {
 type chatRequest struct {
 	ConversationID string `json:"conversation_id"`
 	Message        string `json:"message"`
+	Mode           string `json:"mode"` // customer (default) | buyer | installer
 }
 
 func (s *server) chat(w http.ResponseWriter, r *http.Request) {
@@ -128,6 +125,7 @@ func (s *server) chat(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	tenantID, userID := identity(ctx)
+	m := prompt.ModeByName(req.Mode)
 	start := time.Now()
 
 	emit := func(event string, payload any) {
@@ -143,11 +141,11 @@ func (s *server) chat(w http.ResponseWriter, r *http.Request) {
 	if !topicgate.IsSolarRelated(req.Message) {
 		redirect := topicgate.Redirect()
 		emit("", map[string]string{"token": redirect})
-		s.finish(ctx, &req, tenantID, userID, redirect, "topic-gate", nil, start, false, emit)
+		s.finish(ctx, &req, m.Name, tenantID, userID, redirect, "topic-gate", nil, start, false, emit)
 		return
 	}
 
-	chunks, err := s.d.Retriever.Search(ctx, req.Message, tenantID, s.d.Audience, s.d.TopK)
+	chunks, err := s.d.Retriever.Search(ctx, req.Message, tenantID, m.Audience, s.d.TopK)
 	if err != nil {
 		emit("error", map[string]string{"error": "retrieval failed"})
 		return
@@ -158,11 +156,11 @@ func (s *server) chat(w http.ResponseWriter, r *http.Request) {
 	if decision.Escalate {
 		msg := safety.Escalation()
 		emit("", map[string]string{"token": msg})
-		s.finish(ctx, &req, tenantID, userID, msg, "escalation", chunks, start, true, emit)
+		s.finish(ctx, &req, m.Name, tenantID, userID, msg, "escalation", chunks, start, true, emit)
 		return
 	}
 
-	sys, user := prompt.Assemble(req.Message, chunks)
+	sys, user := prompt.AssembleFor(m, req.Message, chunks)
 	if pc, perr := s.d.Personalizer.Context(ctx, deref(userID)); perr == nil && pc != "" {
 		user = "USER CONTEXT: " + pc + "\n\n" + user
 	}
@@ -181,18 +179,18 @@ func (s *server) chat(w http.ResponseWriter, r *http.Request) {
 		answer.WriteString(tail)
 		emit("", map[string]string{"token": tail})
 	}
-	s.finish(ctx, &req, tenantID, userID, answer.String(), s.d.GenModel, chunks, start, false, emit)
+	s.finish(ctx, &req, m.Name, tenantID, userID, answer.String(), s.d.GenModel, chunks, start, false, emit)
 }
 
 // finish logs the turn and emits the terminal done event (conversation id,
 // assistant message id, source titles). Logging failures are non-fatal.
-func (s *server) finish(ctx context.Context, req *chatRequest, tenantID, userID *string,
+func (s *server) finish(ctx context.Context, req *chatRequest, mode string, tenantID, userID *string,
 	answer, model string, chunks []retriever.Chunk, start time.Time, escalated bool, emit func(string, any)) {
 	convID := req.ConversationID
 	var msgID string
 	if s.d.Logger != nil {
 		if convID == "" {
-			if id, err := s.d.Logger.StartConversation(ctx, tenantID, userID, "customer", "web"); err == nil {
+			if id, err := s.d.Logger.StartConversation(ctx, tenantID, userID, mode, "web"); err == nil {
 				convID = id
 			}
 		}

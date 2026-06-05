@@ -1,0 +1,45 @@
+package prompt
+
+// Mode is an audience the shared "solar brain" serves: a system persona plus the
+// retrieval audience filter it reads from (PRD §1, §6 — one brain, many modes).
+type Mode struct {
+	Name     string // conversation mode label
+	Audience string // knowledge_documents.audience to retrieve from
+	System   string // persona system prompt
+}
+
+// buyerSystem targets homeowners actively comparing/buying — product fit,
+// specs, financing, purchase decision — still grounded, Taglish, advocacy.
+const buyerSystem = `You are Apolaki Assistant helping a Filipino buyer choose and ` +
+	`purchase the right solar setup. Speak natural Taglish. Help them compare products, ` +
+	`sizing, financing, and total cost/ROI in pesos (₱) so they can decide confidently. ` +
+	`Only answer about solar energy and Apolaki's products. Only state facts found in the ` +
+	`provided sources; if missing, offer to connect them to a sales specialist — never guess. ` +
+	`Cite the source titles you used. Be honest, concrete, and encouraging.`
+
+// installerSystem targets technicians/installers — more technical, datasheet-
+// driven — while still insisting on licensed-installer safety standards.
+const installerSystem = `You are Apolaki Assistant supporting a solar installer/technician. ` +
+	`You may use precise technical Taglish and cite datasheet specs (wattage, voltage, ` +
+	`dimensions, mounting). Only answer about solar energy and Apolaki's products. Only state ` +
+	`facts found in the provided sources; if missing, say so — never guess. Always uphold ` +
+	`electrical and installation safety standards and local code. Cite the source titles you used.`
+
+// The three Phase 1/2 modes.
+var (
+	Customer  = Mode{Name: "customer", Audience: "customer", System: System}
+	Buyer     = Mode{Name: "buyer", Audience: "buyer", System: buyerSystem}
+	Installer = Mode{Name: "installer", Audience: "installer", System: installerSystem}
+)
+
+// ModeByName resolves a mode label, defaulting to Customer for empty/unknown.
+func ModeByName(name string) Mode {
+	switch name {
+	case "buyer":
+		return Buyer
+	case "installer":
+		return Installer
+	default:
+		return Customer
+	}
+}

@@ -16,8 +16,15 @@ const System = `You are Apolaki Assistant, a warm, encouraging solar-energy guid
 	`electrical, or installation-safety topics, remind them to consult a licensed installer. ` +
 	`Cite source titles you used. Be kind, clear, and motivating.`
 
-// Assemble builds (systemPrompt, userPrompt) from the question and retrieved chunks.
+// Assemble builds (systemPrompt, userPrompt) for the default customer mode.
 func Assemble(question string, chunks []retriever.Chunk) (string, string) {
+	return AssembleFor(Customer, question, chunks)
+}
+
+// AssembleFor builds (systemPrompt, userPrompt) using the given mode's persona,
+// from the question and retrieved chunks. The grounding instruction is identical
+// across modes; only the system persona differs.
+func AssembleFor(m Mode, question string, chunks []retriever.Chunk) (string, string) {
 	var b strings.Builder
 	if len(chunks) == 0 {
 		b.WriteString("SOURCES: (walang nahanap na source / no sources found)\n\n")
@@ -30,5 +37,5 @@ func Assemble(question string, chunks []retriever.Chunk) (string, string) {
 	}
 	fmt.Fprintf(&b, "QUESTION: %s\n", question)
 	b.WriteString("\nSagutin gamit lang ang SOURCES sa itaas. Kung kulang, mag-escalate.")
-	return System, b.String()
+	return m.System, b.String()
 }

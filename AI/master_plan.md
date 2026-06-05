@@ -26,7 +26,9 @@ Self-hosted on the **Mac Studio** behind **LiteLLM**, **RAG** over Apolaki docs.
 - ✅ **P0.12 done** — `cmd/server`: connects pool, runs idempotent migrations on boot, serves `GET /assistant/health` (`pool.Ping` → `{"status":"ok"}` | 503 `db_unreachable`) on `:8090`; `-migrate` flag applies migrations and exits (deploy/CI). Verified live: health `{"status":"ok"}`; `-migrate` → "migrations applied", exit 0. Commit `19ef1c5`.
 - ✅ **Phase 0 — Foundation COMPLETE** (P0.0–P0.12): Go service + pgvector/HNSW RAG + BGE-M3 embeddings + SEA-LION generation via LiteLLM + synthetic Taglish seed + `ask` CLI test harness + health server. Full suite green, `go vet` clean. **First end-to-end grounded Taglish answer with citations + working solar-only guardrail.**
 - ⏳ Phase 1 — Customer self-service MVP (Vue widget, guardrails, logging + feedback) — **next; needs a Phase 1 plan written before coding**
-- ⬜ Phase 2 — Light Taglish LoRA fine-tune + buyer/installer modes
+- 🔶 Phase 2 — Light Taglish LoRA fine-tune + buyer/installer modes — **started**
+  - ✅ **P2.1 done** — `internal/prompt/modes.go`: `Mode{Name,Audience,System}` + `Customer`/`Buyer`/`Installer` personas + `ModeByName` (defaults Customer). `prompt.Assemble` now delegates to new `AssembleFor(mode,…)`. `cmd/server`'s `/assistant/chat` reads `mode` from the request body and threads it through retrieval (`mode.Audience`), persona (`AssembleFor`), and turn logging (`StartConversation(…, mode, …)`). Dropped now-dead `Deps.Audience`. TDD green, full suite + `go vet` clean. **Backend only** — see follow-ups.
+  - ⏳ **Follow-ups (not built yet):** seed corpus is all `audience=customer` (`data/generate_seed.py`), so buyer/installer modes retrieve nothing until buyer/installer docs are added; the HTML test page has no mode selector. LoRA fine-tune still pending.
 - ⬜ Phase 3 — Advocacy features + scale (cloud GPU once past ~1,000 users)
 
 ## Locked Decisions (see PRD §3)
@@ -63,3 +65,4 @@ Self-hosted on the **Mac Studio** behind **LiteLLM**, **RAG** over Apolaki docs.
 | 2026-06-05 | P0.11 — `ask` CLI (Phase 0 deliverable) | ✅ Done |
 | 2026-06-05 | P0.12 — HTTP health skeleton + `-migrate` flag | ✅ Done |
 | 2026-06-05 | **Phase 0 — Foundation** | ✅ **COMPLETE** |
+| 2026-06-05 | P2.1 — buyer/installer mode plumbing (prompt modes + chat wiring) | ✅ Done |
