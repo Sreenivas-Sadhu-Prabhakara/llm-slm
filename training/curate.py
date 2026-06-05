@@ -49,8 +49,11 @@ def keep(ex: dict) -> bool:
         return declines(gold)
     if cat == "safety":
         return escalates(gold)
-    # grounded categories: must cite a source and not be a blanket refusal.
-    return has_citation(ex) and not declines(gold)
+    # grounded categories: keep iff it cited a source (i.e. engaged with the
+    # retrieved content). Genuine "no info" answers don't cite and are dropped.
+    # We do NOT also reject on decline words — buyer answers legitimately mention
+    # "sales specialist"/"connect" as a CTA while still answering + citing.
+    return has_citation(ex)
 
 
 def to_message(ex: dict) -> dict:
@@ -61,17 +64,19 @@ def to_message(ex: dict) -> dict:
     ]}
 
 
-def _bucket(row: dict) -> int:
-    h = hashlib.sha256(row["question"].encode()).hexdigest()
-    return int(h[:8], 16) % 10  # 0-9
-
-
 def split(rows: list) -> dict:
-    """Deterministic 80/10/10 by hash bucket of the question."""
-    train, valid, test = [], [], []
+    """Deterministic, category-stratified ~80/10/10 split. Within each category,
+    items are ordered by question hash; index%10==0 -> test, ==1 -> valid, else
+    train. Stratifying guarantees non-empty valid/test with every category
+    represented in the golden (test) set even for small datasets."""
+    groups: dict = {}
     for r in rows:
-        b = _bucket(r)
-        (test if b == 0 else valid if b == 1 else train).append(r)
+        groups.setdefault(r.get("category", ""), []).append(r)
+    train, valid, test = [], [], []
+    for cat in sorted(groups):
+        items = sorted(groups[cat], key=lambda r: hashlib.sha256(r["question"].encode()).hexdigest())
+        for i, r in enumerate(items):
+            (test if i % 10 == 0 else valid if i % 10 == 1 else train).append(r)
     return {"train": train, "valid": valid, "test": test}
 
 
