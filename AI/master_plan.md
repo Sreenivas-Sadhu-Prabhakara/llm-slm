@@ -18,7 +18,8 @@ Self-hosted on the **Mac Studio** behind **LiteLLM**, **RAG** over Apolaki docs.
 - ✅ **P0.4 done** — `internal/embed` Go client (`New`/`Embed`) hits OpenAI-compatible `/embeddings`; TDD via httptest fake, returns 1024-dim `[]float64`. `go vet` clean; full suite (config/db/embed) green. Commit `97d7fbd`.
 - ✅ **P0.5 done** — registered `sea-lion-9b` generation route in LiteLLM (`:4000`): `ollama_chat/hf.co/aisingapore/Gemma-SEA-LION-v3-9B-IT-GGUF:Q4_K_M` (5.8GB GGUF, pulled into Ollama), 600s timeout, fallback `sea-lion-9b → qwen-ollama`. Restarted LiteLLM, smoke-test green (Taglish `SEA_LION_OK`, `model: sea-lion-9b`). **Infra-only** (no service-repo code); `litellm_config.yaml` in `agent_skills/` (unversioned). Memory `local-serving-stack` updated.
 - ✅ **P0.6 done** — `data/generate_seed.py` (stdlib-only, deterministic) + `data/requirements.txt`; writes `data/seed/corpus.jsonl` (7 Taglish docs: 4 FAQ + 2 datasheet + 1 ticket), each defaulting `audience=customer`/`brand=Apolaki`/`language=taglish`/`product` + sha256 `content_hash`. Verified 7 valid JSON lines + identical output on re-run; `data/seed/` added to `.gitignore` (raw output unversioned). Commit `48e3542`.
-- ⏳ **Next:** execute **P0.7** (ingestion pipeline — `internal/ingest` chunk→embed→upsert + `cmd/ingest`, reads `data/seed/corpus.jsonl` into pgvector). Needs infra up: Postgres (`colima start && docker-compose up -d`), LiteLLM `:4000`, embeddings server `:8100`.
+- ✅ **P0.7 done** — `internal/ingest` (`Chunk` word-based size/overlap; `Upsert` inserts doc row → chunks → BGE-M3 embeddings via LiteLLM, parameterized SQL, `tenant_id` NULL = shared, pgvector text-literal via `pgvec`) + `cmd/ingest` (reads JSONL, migrates, ingests). TDD: chunker unit tests green. Integration verified end-to-end: `ingested 7 documents` → 7 docs / 7 chunks / embedding dim 1024 in pgvector. Full suite + `go vet` clean. Commit `942c2fe`. **Note:** Upsert is insert-only (no content_hash dedup yet) — re-running duplicates; fine for Phase 0.
+- ⏳ **Next:** execute **P0.8** (retriever — `internal/retriever` HNSW vector search, tenant-scoped, top-k cosine over `knowledge_chunks`). Needs infra up: Postgres (`colima start && docker-compose up -d`), LiteLLM `:4000`, embeddings server `:8100`; seed already ingested.
 - ⬜ Phase 0 — Foundation (Go service + RAG + synthetic data + CLI test harness)
 - ⬜ Phase 1 — Customer self-service MVP (Vue widget, guardrails, logging + feedback)
 - ⬜ Phase 2 — Light Taglish LoRA fine-tune + buyer/installer modes
@@ -32,7 +33,8 @@ Self-hosted on the **Mac Studio** behind **LiteLLM**, **RAG** over Apolaki docs.
 - **Guardrails:** 3-layer solar-only (topic gate → grounded-only → safety/escalate).
 
 ## Next Session
-- Execute **P0.7** (ingestion pipeline — `internal/ingest` chunk→embed→upsert + `cmd/ingest`; reads `data/seed/corpus.jsonl` → pgvector) from `AI/docs/tasks/2026-06-05-phase-0-foundation.md` (Task 7), one task per session per the ai-wf loop. Regenerate seed first if missing: `python3 data/generate_seed.py`.
+- Execute **P0.8** (retriever — `internal/retriever` HNSW vector search, tenant-scoped, top-k cosine over `knowledge_chunks`) from `AI/docs/tasks/2026-06-05-phase-0-foundation.md` (Task 8), one task per session per the ai-wf loop.
+- Re-ingest if DB was reset: `set -a; source .env; set +a; python3 data/generate_seed.py && go run ./cmd/ingest` (insert-only — truncate `knowledge_chunks`/`knowledge_documents` first to avoid duplicates).
 - Confirm infra up first: `colima start && docker-compose up -d` (Postgres), `curl :4000/health/liveliness`, `:8000/health`, `:11434/api/tags`, and the **embeddings server** `:8100/health` (start: `cd embeddings-server && nohup .venv/bin/python -m uvicorn server:app --host 127.0.0.1 --port 8100 > /tmp/bge.log 2>&1 &`). None auto-start after reboot.
 - Run Go tests that touch the DB with env loaded: `set -a; source .env; set +a; go test ./...`.
 
@@ -50,4 +52,5 @@ Self-hosted on the **Mac Studio** behind **LiteLLM**, **RAG** over Apolaki docs.
 | 2026-06-05 | P0.4 — BGE-M3 embeddings Go client (internal/embed) | ✅ Done |
 | 2026-06-05 | P0.5 — Register SEA-LION 9B generation model in LiteLLM | ✅ Done |
 | 2026-06-05 | P0.6 — Synthetic seed-data generator (Python) | ✅ Done |
-| — | P0.7 — Ingestion: chunk + embed + upsert + ingest CLI | ⏳ Next |
+| 2026-06-05 | P0.7 — Ingestion: chunk + embed + upsert + ingest CLI | ✅ Done |
+| — | P0.8 — Retriever (HNSW vector search, tenant-scoped) | ⏳ Next |
