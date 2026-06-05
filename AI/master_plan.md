@@ -9,7 +9,9 @@ Self-hosted on the **Mac Studio** behind **LiteLLM**, **RAG** over Apolaki docs.
 
 ## Status — 2026-06-05
 - ✅ Design / PRD complete and **approved** → `AI/docs/PRDs/2026-06-05-apolaki-solar-assistant-design.md`
-- ⏳ **Next:** implementation plan (all phases 0–3) via the writing-plans workflow
+- ✅ **Local serving stack hardened** (fixed timeouts/peer-resets): LiteLLM `:4000` live with retries + MLX→Ollama fallback; MLX real streaming. See memory `local-serving-stack`.
+- ✅ **Phase 0 implementation plan written** → `AI/docs/tasks/2026-06-05-phase-0-foundation.md` (13 bite-sized TDD tasks P0.0–P0.12). Phases 1–3 kept as roadmap (detail gated on P0 outcomes + real data).
+- ⏳ **Next:** execute Phase 0 — start with **P0.0** (one task per session).
 - ⬜ Phase 0 — Foundation (Go service + RAG + synthetic data + CLI test harness)
 - ⬜ Phase 1 — Customer self-service MVP (Vue widget, guardrails, logging + feedback)
 - ⬜ Phase 2 — Light Taglish LoRA fine-tune + buyer/installer modes
@@ -23,12 +25,14 @@ Self-hosted on the **Mac Studio** behind **LiteLLM**, **RAG** over Apolaki docs.
 - **Guardrails:** 3-layer solar-only (topic gate → grounded-only → safety/escalate).
 
 ## Next Session
-- Generate the **implementation plan** (writing-plans) → save under `AI/docs/tasks/`.
-- Then begin **Phase 0**, one task per session per the ai-wf loop.
+- Execute **P0.0** (bootstrap Go module + config) from `AI/docs/tasks/2026-06-05-phase-0-foundation.md`, one task per session per the ai-wf loop.
+- Before coding, confirm services are up: `curl :4000/health/liveliness`, `:8000/health`, `:11434/api/tags` (rerun `agent_skills/start-*.sh` after reboot — they don't auto-start yet).
 
 ## Task Log
 | Date | Task | Status |
 |------|------|--------|
 | 2026-06-05 | Brainstorm + design / PRD | ✅ Done |
 | 2026-06-05 | git init + scaffold (PRD, master_plan, .gitignore) | ✅ Done |
-| — | Implementation plan (phases 0–3) | ⏳ Next |
+| 2026-06-05 | Fix local-serving timeouts/peer-resets (LiteLLM proxy + MLX real streaming + fallback) | ✅ Done |
+| 2026-06-05 | Phase 0 implementation plan (P0.0–P0.12) | ✅ Done |
+| — | Execute Phase 0 (one task per session) | ⏳ Next |
