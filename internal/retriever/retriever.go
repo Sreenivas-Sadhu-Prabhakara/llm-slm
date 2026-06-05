@@ -33,9 +33,15 @@ func New(pool *pgxpool.Pool, emb embed.Client) *Retriever {
 // Search embeds the query and returns the top-k nearest chunks, scoped to the
 // tenant (or shared/global where tenant_id IS NULL) and audience.
 func (r *Retriever) Search(ctx context.Context, query string, tenantID *string, audience string, k int) ([]Chunk, error) {
+	if k <= 0 {
+		return nil, fmt.Errorf("retriever: k must be > 0, got %d", k)
+	}
 	vec, err := r.emb.Embed(ctx, query)
 	if err != nil {
 		return nil, err
+	}
+	if len(vec) == 0 {
+		return nil, fmt.Errorf("retriever: embed returned empty vector")
 	}
 	rows, err := r.pool.Query(ctx, `
 		SELECT c.id, d.id, d.title, d.source_uri, c.content,
@@ -63,7 +69,9 @@ func (r *Retriever) Search(ctx context.Context, query string, tenantID *string, 
 	return out, rows.Err()
 }
 
-// pgvec renders a float slice as a pgvector text literal: [v0,v1,...]
+// pgvec renders a float slice as a pgvector text literal [v0,v1,...]. It is
+// bound as a query parameter; pgvector implicitly casts text → vector. Phase 0
+// approach — revisit with pgvector-go typed binding if the implicit cast is dropped.
 func pgvec(v []float64) string {
 	b := strings.Builder{}
 	b.WriteByte('[')

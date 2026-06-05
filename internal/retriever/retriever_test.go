@@ -39,6 +39,9 @@ func TestSearchReturnsNearestChunk(t *testing.T) {
 	if len(got) == 0 {
 		t.Fatal("expected at least one result")
 	}
+	if got[0].Content != "test chunk content" {
+		t.Fatalf("expected content %q, got %q", "test chunk content", got[0].Content)
+	}
 }
 
 // unitVec returns a 1024-dim vector where index i = 1.0 and all others = 0.0.
@@ -63,7 +66,7 @@ func seedOneChunk(t *testing.T, pool *pgxpool.Pool) {
 		VALUES ($1, $2, NULL, $3, NULL, $4, $5, $6)
 		RETURNING id`,
 		"Test Doc", "manual", "customer", "TestBrand", "taglish",
-		fmt.Sprintf("testhash-%d", 0),
+		"testhash-seed",
 	).Scan(&docID)
 	if err != nil {
 		t.Fatalf("seed doc: %v", err)
