@@ -14,7 +14,8 @@ Self-hosted on the **Mac Studio** behind **LiteLLM**, **RAG** over Apolaki docs.
 - ✅ **P0.0 done** — Go module `github.com/apolaki/solar-assistant`, `.env.example`, Makefile, `internal/config` (TDD, passing). Commit `7175b3d`.
 - ✅ **P0.1 done** — `docker-compose.yml` (pgvector pg16 :5433), `internal/db.Connect` (pgx/v5), verified vs PG 16.14 + pgvector 0.8.2. Commit `c3d1d03`. **Env note:** Docker = **Colima** (run `colima start`) + standalone **`docker-compose`** (no `docker compose` plugin).
 - ✅ **P0.2 done** — `internal/db.Migrate` (idempotent, `schema_migrations`-tracked) + schema: knowledge_documents/chunks (vector(1024)+HNSW), conversations/messages/feedback. Integration test green. Commit `23e54a4`.
-- ⏳ **Next:** execute **P0.3** (BGE-M3 embedding server + LiteLLM route).
+- ✅ **P0.3 done** — `embeddings-server/` (FastAPI, OpenAI-compatible `/v1/embeddings`, BGE-M3 1024-dim dense) on `:8100`; registered `bge-m3` in LiteLLM (`:4000`), restarted, verified `dim: 1024` end-to-end. Commit `4a3e3ec`. **Notes:** model cached at `~/.cache/huggingface/hub/models--BAAI--bge-m3` (~4.3GB, downloaded once); venv had no console scripts so start via `.venv/bin/python -m uvicorn server:app --host 127.0.0.1 --port 8100`; `litellm_config.yaml` (in `agent_skills/`, unversioned) gained a `bge-m3` route block.
+- ⏳ **Next:** execute **P0.4** (BGE-M3 embeddings Go client `internal/embed`, TDD via httptest).
 - ⬜ Phase 0 — Foundation (Go service + RAG + synthetic data + CLI test harness)
 - ⬜ Phase 1 — Customer self-service MVP (Vue widget, guardrails, logging + feedback)
 - ⬜ Phase 2 — Light Taglish LoRA fine-tune + buyer/installer modes
@@ -28,8 +29,8 @@ Self-hosted on the **Mac Studio** behind **LiteLLM**, **RAG** over Apolaki docs.
 - **Guardrails:** 3-layer solar-only (topic gate → grounded-only → safety/escalate).
 
 ## Next Session
-- Execute **P0.3** (BGE-M3 embedding server, OpenAI-compatible, + register `bge-m3` in LiteLLM) from `AI/docs/tasks/2026-06-05-phase-0-foundation.md`, one task per session per the ai-wf loop. Note: first run downloads BGE-M3 (~2GB).
-- Confirm infra up first: `colima start && docker-compose up -d` (Postgres), and `curl :4000/health/liveliness`, `:8000/health`, `:11434/api/tags` (rerun `agent_skills/start-*.sh` after reboot — none auto-start yet).
+- Execute **P0.4** (BGE-M3 embeddings Go client → `internal/embed/embed.go` + `embed_test.go`, TDD with an httptest fake of LiteLLM) from `AI/docs/tasks/2026-06-05-phase-0-foundation.md`, one task per session per the ai-wf loop.
+- Confirm infra up first: `colima start && docker-compose up -d` (Postgres), `curl :4000/health/liveliness`, `:8000/health`, `:11434/api/tags`, and the **embeddings server** `:8100/health` (start: `cd embeddings-server && nohup .venv/bin/python -m uvicorn server:app --host 127.0.0.1 --port 8100 > /tmp/bge.log 2>&1 &`). None auto-start after reboot.
 - Run Go tests that touch the DB with env loaded: `set -a; source .env; set +a; go test ./...`.
 
 ## Task Log
@@ -42,4 +43,5 @@ Self-hosted on the **Mac Studio** behind **LiteLLM**, **RAG** over Apolaki docs.
 | 2026-06-05 | P0.0 — Go module + typed config (TDD) | ✅ Done |
 | 2026-06-05 | P0.1 — pgvector Postgres + db pool | ✅ Done |
 | 2026-06-05 | P0.2 — migrations runner + HNSW schema | ✅ Done |
-| — | P0.3 — BGE-M3 embedding server + LiteLLM route | ⏳ Next |
+| 2026-06-05 | P0.3 — BGE-M3 embedding server + LiteLLM route | ✅ Done |
+| — | P0.4 — BGE-M3 embeddings Go client (internal/embed) | ⏳ Next |
