@@ -36,3 +36,5 @@ dist/
 *.safetensors
 *.bin
 /data/raw/
+
+data/seed/

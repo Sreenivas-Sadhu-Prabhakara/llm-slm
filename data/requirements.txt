@@ -1,0 +1,1 @@
+# stdlib-only generator; no external deps required for Phase 0
