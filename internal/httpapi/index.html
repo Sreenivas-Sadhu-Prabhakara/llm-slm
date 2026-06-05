@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Apolaki Solar Assistant — test harness</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+  h1 { font-size: 1.25rem; }
+  #log { display: flex; flex-direction: column; gap: .75rem; margin-bottom: 1rem; }
+  .msg { padding: .6rem .8rem; border-radius: .6rem; white-space: pre-wrap; }
+  .user { background: #2563eb22; align-self: flex-end; }
+  .bot { background: #88888822; align-self: flex-start; }
+  .sources { font-size: .8rem; opacity: .75; margin-top: .3rem; }
+  .fb button { cursor: pointer; border: none; background: none; font-size: 1rem; }
+  form { display: flex; gap: .5rem; }
+  input[type=text] { flex: 1; padding: .55rem; border-radius: .5rem; border: 1px solid #8888; }
+  button.send { padding: .55rem 1rem; border-radius: .5rem; border: none; background: #2563eb; color: #fff; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>☀️ Apolaki Solar Assistant <small>(local test harness)</small></h1>
+<div id="log"></div>
+<form id="f">
+  <input id="q" type="text" placeholder="Magtanong tungkol sa solar…" autocomplete="off" autofocus />
+  <button class="send" type="submit">Send</button>
+</form>
+<script>
+const log = document.getElementById('log');
+const form = document.getElementById('f');
+const q = document.getElementById('q');
+let conversationId = null;
+
+function add(cls, text) {
+  const d = document.createElement('div');
+  d.className = 'msg ' + cls;
+  d.textContent = text;
+  log.appendChild(d);
+  d.scrollIntoView();
+  return d;
+}
+
+function feedbackBar(messageId) {
+  const bar = document.createElement('div');
+  bar.className = 'fb';
+  for (const [label, rating] of [['👍','up'],['👎','down']]) {
+    const b = document.createElement('button');
+    b.textContent = label;
+    b.onclick = async () => {
+      await fetch('/assistant/feedback', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ message_id: messageId, rating })
+      });
+      bar.textContent = 'salamat sa feedback! 🙏';
+    };
+    bar.appendChild(b);
+  }
+  return bar;
+}
+
+form.onsubmit = async (e) => {
+  e.preventDefault();
+  const message = q.value.trim();
+  if (!message) return;
+  q.value = '';
+  add('user', message);
+  const bot = add('bot', '');
+
+  const res = await fetch('/assistant/chat', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ conversation_id: conversationId, message })
+  });
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = '';
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const events = buf.split('\n\n');
+    buf = events.pop();
+    for (const ev of events) {
+      let name = 'message', data = '';
+      for (const line of ev.split('\n')) {
+        if (line.startsWith('event:')) name = line.slice(6).trim();
+        else if (line.startsWith('data:')) data += line.slice(5).trim();
+      }
+      if (!data) continue;
+      const payload = JSON.parse(data);
+      if (name === 'message') bot.textContent += payload.token || '';
+      else if (name === 'error') bot.textContent += '\n[error] ' + payload.error;
+      else if (name === 'done') {
+        conversationId = payload.conversation_id || conversationId;
+        if (payload.sources && payload.sources.length) {
+          const s = document.createElement('div');
+          s.className = 'sources';
+          s.textContent = 'Sources: ' + payload.sources.join(' · ');
+          bot.appendChild(s);
+        }
+        if (payload.message_id) bot.appendChild(feedbackBar(payload.message_id));
+      }
+    }
+  }
+};
+</script>
+</body>
+</html>
